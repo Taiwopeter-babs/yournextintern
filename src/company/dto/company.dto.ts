@@ -1,5 +1,7 @@
+import InternDto from 'src/intern/dto/intern.dto';
+
 export default class CompanyDto {
-  public id: string;
+  public id: number;
 
   public name: string;
 
@@ -21,5 +23,5 @@ export default class CompanyDto {
 
   public profileImageUrl?: string;
 
-  //   public interns:
+  public interns?: InternDto[];
 }

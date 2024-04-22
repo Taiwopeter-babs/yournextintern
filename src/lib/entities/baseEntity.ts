@@ -25,10 +25,10 @@ export default abstract class BaseEntity {
   })
   public password: string;
 
-  @CreateDateColumn('createdAt')
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   public createdAt: Date;
 
-  @UpdateDateColumn('updatedAt')
+  @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   public updatedAt: Date;
 
   @Column({

@@ -2,7 +2,7 @@ import BaseEntity from 'src/lib/entities/baseEntity';
 import { InternCompany } from 'src/lib/entities/internCompany.entity';
 import { Entity, Column, OneToMany } from 'typeorm';
 
-enum Gender {
+export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
 }

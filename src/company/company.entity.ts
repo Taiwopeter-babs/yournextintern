@@ -1,6 +1,7 @@
 import BaseEntity from 'src/lib/entities/baseEntity';
 import { InternCompany } from 'src/lib/entities/internCompany.entity';
 import { Entity, Column, OneToMany } from 'typeorm';
+import CompanyDto from './dto/company.dto';
 
 @Entity('companies')
 export default class Company extends BaseEntity {
@@ -54,4 +55,6 @@ export default class Company extends BaseEntity {
 
   @OneToMany(() => InternCompany, (internCompany) => internCompany.company)
   public internCompanies: InternCompany[];
+
+  ToDto: (entity: Company) => CompanyDto;
 }
