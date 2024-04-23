@@ -5,11 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import CompanyDto from './dto/company.dto';
 import { IPagination } from 'src/lib/types';
 import getPaginationOffset from 'src/lib/pagination';
-import { CompanyNotFoundException } from 'src/exceptions/not-found.exception';
-import { ServerErrorException } from 'src/exceptions/server-error.exception';
+import { CompanyNotFoundException } from 'src/api/v1/exceptions/not-found.exception';
+import { ServerErrorException } from 'src/api/v1/exceptions/server-error.exception';
 import { CompanyMapper } from './dto/mapper';
-import CreateCompanyDto from './dto/createCompany.dto';
-import { CompanyAlreadyExistsException } from 'src/exceptions/already-exists.exception';
+import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
+import { CompanyAlreadyExistsException } from 'src/api/v1/exceptions/already-exists.exception';
 
 @Injectable()
 export class CompanyService {
@@ -37,10 +37,7 @@ export class CompanyService {
     includeInterns: boolean,
   ): Promise<CompanyDto> {
     try {
-      const company = await this.repo.findOneBy({ id: companyId });
-      if (!company) {
-        throw new CompanyNotFoundException(companyId);
-      }
+      const company = await this.getCompanyEntity(companyId, includeInterns);
 
       return CompanyMapper.toDto(company, includeInterns);
     } catch (error) {
@@ -77,6 +74,22 @@ export class CompanyService {
     }
   }
 
+  public async updateCompany(
+    companyId: number,
+    data: UpdateCompanyDto,
+    includeInterns = false,
+  ) {
+    try {
+      await this.getCompanyEntity(companyId, includeInterns);
+
+      await this.repo.update(companyId, { ...data });
+
+      return true;
+    } catch (error) {
+      throw new ServerErrorException();
+    }
+  }
+
   /**
    * Performs the check for any insertion to avoid duplicate entries
    */
@@ -99,6 +112,27 @@ export class CompanyService {
       }
 
       return;
+    } catch (error) {
+      throw new ServerErrorException();
+    }
+  }
+
+  private async getCompanyEntity(
+    companyId: number,
+    includeInterns = false,
+  ): Promise<Company> {
+    try {
+      const company = await this.repo.findOne({
+        where: { id: companyId },
+        relationLoadStrategy: 'query', // use split queries
+        relations: { internCompanies: includeInterns },
+      });
+
+      if (!company) {
+        throw new CompanyNotFoundException(companyId);
+      }
+
+      return company;
     } catch (error) {
       throw new ServerErrorException();
     }

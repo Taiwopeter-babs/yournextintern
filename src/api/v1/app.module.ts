@@ -6,7 +6,7 @@ import { CompanyModule } from './company/company.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from 'configuration/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { InternModule } from './intern/intern.module';
+import { InternModule } from '../../intern/intern.module';
 import { RepositoryModule } from './repository/repository.module';
 
 @Module({

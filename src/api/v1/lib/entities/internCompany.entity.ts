@@ -1,4 +1,4 @@
-import Company from 'src/company/company.entity';
+import Company from 'src/api/v1/company/company.entity';
 import Intern from 'src/intern/intern.entity';
 import {
   Column,

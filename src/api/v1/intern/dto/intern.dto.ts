@@ -1,4 +1,4 @@
-import CompanyDto from 'src/company/dto/company.dto';
+import CompanyDto from 'src/api/v1/company/dto/company.dto';
 
 export default class InternDto {
   public id: string;
