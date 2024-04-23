@@ -3,12 +3,15 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
   Column,
+  Index,
+  BeforeInsert,
 } from 'typeorm';
 
 export default abstract class BaseEntity {
   @PrimaryGeneratedColumn()
   public id: number;
 
+  @Index()
   @Column({
     type: 'varchar',
     length: 60,
@@ -37,4 +40,12 @@ export default abstract class BaseEntity {
     nullable: true,
   })
   public profileImageUrl: string;
+
+  /**
+   * Before insert event listeners.
+   */
+  @BeforeInsert()
+  toLowerCase() {
+    this.email = this.email.toLowerCase();
+  }
 }

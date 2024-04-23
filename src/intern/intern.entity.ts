@@ -1,6 +1,6 @@
 import BaseEntity from 'src/lib/entities/baseEntity';
 import { InternCompany } from 'src/lib/entities/internCompany.entity';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, BeforeInsert } from 'typeorm';
 
 export enum Gender {
   MALE = 'male',
@@ -66,4 +66,15 @@ export default class Intern extends BaseEntity {
 
   @OneToMany(() => InternCompany, (internCompany) => internCompany.intern)
   public internCompanies: InternCompany[];
+
+  /**
+   * Before insert event listeners.
+   */
+  @BeforeInsert()
+  toLowerCase() {
+    this.firstName = this.firstName.toLowerCase();
+    this.lastName = this.lastName.toLowerCase();
+    this.course = this.course.toLowerCase();
+    this.school = this.school.toLowerCase();
+  }
 }
