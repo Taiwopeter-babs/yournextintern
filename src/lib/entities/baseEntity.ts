@@ -3,12 +3,15 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
   Column,
+  Index,
+  BeforeInsert,
 } from 'typeorm';
 
 export default abstract class BaseEntity {
   @PrimaryGeneratedColumn()
   public id: number;
 
+  @Index()
   @Column({
     type: 'varchar',
     length: 60,
@@ -25,10 +28,10 @@ export default abstract class BaseEntity {
   })
   public password: string;
 
-  @CreateDateColumn('createdAt')
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   public createdAt: Date;
 
-  @UpdateDateColumn('updatedAt')
+  @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   public updatedAt: Date;
 
   @Column({
@@ -37,4 +40,12 @@ export default abstract class BaseEntity {
     nullable: true,
   })
   public profileImageUrl: string;
+
+  /**
+   * Before insert event listeners.
+   */
+  @BeforeInsert()
+  toLowerCase() {
+    this.email = this.email.toLowerCase();
+  }
 }

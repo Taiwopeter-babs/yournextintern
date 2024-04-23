@@ -1,9 +1,10 @@
 import BaseEntity from 'src/lib/entities/baseEntity';
 import { InternCompany } from 'src/lib/entities/internCompany.entity';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, Index, BeforeInsert } from 'typeorm';
 
 @Entity('companies')
 export default class Company extends BaseEntity {
+  @Index()
   @Column({
     type: 'varchar',
     unique: true,
@@ -54,4 +55,14 @@ export default class Company extends BaseEntity {
 
   @OneToMany(() => InternCompany, (internCompany) => internCompany.company)
   public internCompanies: InternCompany[];
+
+  /**
+   * Before insert event listeners.
+   */
+  @BeforeInsert()
+  toLowerCase() {
+    this.name = this.name.toLowerCase();
+    this.address = this.address.toLowerCase();
+    this.address = this.address.toLowerCase();
+  }
 }
