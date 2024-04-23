@@ -9,6 +9,7 @@ import { CompanyNotFoundException } from 'src/exceptions/not-found.exception';
 import { ServerErrorException } from 'src/exceptions/server-error.exception';
 import { CompanyMapper } from './dto/mapper';
 import CreateCompanyDto from './dto/createCompany.dto';
+import { CompanyAlreadyExistsException } from 'src/exceptions/already-exists.exception';
 
 @Injectable()
 export class CompanyService {
@@ -63,29 +64,41 @@ export class CompanyService {
     }
   }
 
-  public async createCompany(data: CreateCompanyDto) {
+  public async createCompany(company: CreateCompanyDto) {
     try {
-      const newCompany = await this.repo.save(data);
+      const data = { name: company.name, email: company.email };
+      await this.checkCompanyExists(data);
+
+      const newCompany = await this.repo.save(company);
+
+      return CompanyMapper.toDto(newCompany, false);
     } catch (error) {
       throw new ServerErrorException();
     }
   }
 
-  private async checkCompanyExists(
-    data: { email: string; name: string },
-    includeInterns: boolean,
-  ): Promise<CompanyDto> {
+  /**
+   * Performs the check for any insertion to avoid duplicate entries
+   */
+  private async checkCompanyExists(data: {
+    email: string;
+    name: string;
+  }): Promise<void> {
     try {
       const company = await this.repo.findOne({
         select: { id: true, name: true, email: true },
-        where: [{ name: data.name }, {}],
+        // or query
+        where: [
+          { name: data.name.toLowerCase() },
+          { email: data.email.toLowerCase() },
+        ],
       });
 
-      if (!company) {
-        throw new CompanyNotFoundException(companyEmail);
+      if (company) {
+        throw new CompanyAlreadyExistsException(data.email);
       }
 
-      return CompanyMapper.toDto(company, includeInterns);
+      return;
     } catch (error) {
       throw new ServerErrorException();
     }
