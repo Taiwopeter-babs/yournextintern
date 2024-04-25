@@ -3,11 +3,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CompanyModule } from './company/company.module';
 
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration from 'configuration/configuration';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { InternModule } from '../../intern/intern.module';
-import { RepositoryModule } from './repository/repository.module';
+import configuration from './configuration/configuration';
+import { InternModule } from './intern/intern.module';
+import { InternCompany } from './lib/entities/internCompany.entity';
+import { DatabaseModule } from './database/database.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -17,29 +17,9 @@ import { RepositoryModule } from './repository/repository.module';
       cache: true,
       isGlobal: true,
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        // database url
-        url:
-          configService.get('NODE_ENV') === 'development'
-            ? configService.get<string>('POSTGRES.POSTGRES_DEV')
-            : configService.get<string>('POSTGRES.POSTGRES_PROD'),
-
-        // configured for development environments only
-        synchronize:
-          configService.get('NODE_ENV') === 'development' ? true : false,
-
-        // entities configured with TypeOrmModule.forFeature() are loaded
-        autoLoadEntities: true,
-
-        migrations: ['migrations/*.ts'],
-        migrationsTableName: 'yni_migrations',
-      }),
-    }),
+    InternCompany,
     InternModule,
-    RepositoryModule,
-    //
+    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -5,11 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import CompanyDto from './dto/company.dto';
 import { IPagination } from '../lib/types';
 import getPaginationOffset from '../lib/pagination';
-import { CompanyNotFoundException } from 'src/api/v1/exceptions/not-found.exception';
-import { ServerErrorException } from 'src/api/v1/exceptions/server-error.exception';
+import { CompanyNotFoundException } from '../exceptions/not-found.exception';
+import { ServerErrorException } from '../exceptions/server-error.exception';
 import { CompanyMapper } from './dto/mapper';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
-import { CompanyAlreadyExistsException } from 'src/api/v1/exceptions/already-exists.exception';
+import { CompanyAlreadyExistsException } from '../exceptions/already-exists.exception';
 
 type PagedCompanyDto = {
   companies: CompanyDto[];

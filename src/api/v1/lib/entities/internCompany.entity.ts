@@ -1,5 +1,5 @@
-import Company from 'src/api/v1/company/company.entity';
-import Intern from 'src/intern/intern.entity';
+import Company from '../../company/company.entity';
+import Intern from '../../intern/intern.entity';
 import {
   Column,
   CreateDateColumn,

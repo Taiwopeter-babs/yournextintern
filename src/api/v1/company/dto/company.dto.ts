@@ -1,4 +1,4 @@
-import InternDto from 'src/intern/dto/intern.dto';
+import InternDto from '../../intern/dto/intern.dto';
 
 export default class CompanyDto {
   public id: number;

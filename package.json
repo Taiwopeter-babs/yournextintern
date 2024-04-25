@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "nest start --watch --entryFile ./main",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "run-migration": "typeorm-ts-node-commonjs migration:run -- -d src/api/v1/database/ormConfig.ts",
+    "typeorm": "npm run build && npx typeorm-ts-node-commonjs -d src/api/v1/database/ormConfig.ts",
+    "create-migration": "typeorm migration:create",
+    "gen-migration": "npm run typeorm -- migration:generate"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -29,6 +33,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
     "pg": "^8.11.5",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
