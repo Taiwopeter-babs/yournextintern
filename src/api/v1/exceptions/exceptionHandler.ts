@@ -32,18 +32,25 @@ export function exceptionHandler(error: Error, value: TError = '') {
     throw new ServerErrorException(message);
   }
 
+  const exceptionMessage = `${message} ${value}`;
+
   switch (name) {
     case 'CompanyNotFoundException':
-      throw new CompanyNotFoundException(value);
+      throw new CompanyNotFoundException(exceptionMessage);
+
     case 'InternNotFoundException':
-      throw new InternNotFoundException(value);
+      throw new InternNotFoundException(exceptionMessage);
+
     case 'InternAlreadyExistsException':
-      throw new InternAlreadyExistsException(value);
+      throw new InternAlreadyExistsException(exceptionMessage);
+
     case 'CompanyAlreadyExistsException':
-      throw new CompanyAlreadyExistsException(value);
+      throw new CompanyAlreadyExistsException(exceptionMessage);
+
     case 'ServerErrorException':
-      throw new ServerErrorException(message);
+      throw new ServerErrorException(exceptionMessage);
+
     default:
-      throw new ServerErrorException(message);
+      throw new ServerErrorException(exceptionMessage);
   }
 }
