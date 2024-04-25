@@ -6,7 +6,7 @@ import { DataSource } from 'typeorm';
 import configuration from '../configuration/configuration';
 import Company from '../company/company.entity';
 import Intern from '../intern/intern.entity';
-import { InternCompany } from '../lib/entities/internCompany.entity';
+import { InternCompany } from '../interncompany/internCompany.entity';
 
 /**
  * This is for typeorm migrations generation.
@@ -17,6 +17,8 @@ const dataSource: DataSource = new DataSource({
   entities: [Company, Intern, InternCompany],
   // Synchronize database schema with entities
   synchronize: configuration().NODE_ENV === 'development',
+  migrations: ['./migrations/*.ts'],
+  migrationsTableName: 'yni_migrations',
 });
 
 console.log(configuration().NODE_ENV);

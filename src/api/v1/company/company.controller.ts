@@ -4,25 +4,29 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseIntPipe,
+  // ParseIntPipe,
   Post,
   Put,
-  Query,
+  // Query,
+  Req,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { IPagination } from '../lib/types';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
+import { Request } from 'express';
 
 @Controller('companies')
 export class CompanyController {
   constructor(private readonly _service: CompanyService) {}
 
   @Get()
-  public async getAllCompanies(
-    @Query('pageNumber', ParseIntPipe) pageNumber: number,
-    @Query('pageSize', ParseIntPipe) pageSize: number,
-  ) {
-    const pageParams = { pageNumber, pageSize } as IPagination;
+  public async getAllCompanies(@Req() request: Request) {
+    const { pageNumber, pageSize } = request.query as Record<string, any>;
+
+    const pageParams = {
+      pageNumber: parseInt(pageNumber, 10) || 1,
+      pageSize: parseInt(pageSize, 10) || 20,
+    } as IPagination;
 
     const companiesData = await this._service.getAllCompanies(pageParams);
 

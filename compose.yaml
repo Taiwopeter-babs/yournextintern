@@ -31,7 +31,6 @@ services:
     ports:
       - 5432:5432   
     restart: always
-    user: "${POSTGRES_USER}"
     env_file:
       - path: .env
         required: true

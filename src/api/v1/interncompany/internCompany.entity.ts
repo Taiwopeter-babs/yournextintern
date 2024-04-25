@@ -1,5 +1,5 @@
-import Company from '../../company/company.entity';
-import Intern from '../../intern/intern.entity';
+import Company from '../company/company.entity';
+import Intern from '../intern/intern.entity';
 import {
   Column,
   CreateDateColumn,
@@ -22,9 +22,13 @@ export class InternCompany {
   @CreateDateColumn()
   public dateApplied: Date;
 
-  @ManyToOne(() => Company, (company) => company.internCompanies)
+  @ManyToOne(() => Company, (company) => company.internCompanies, {
+    cascade: ['remove', 'update'],
+  })
   public company: Company;
 
-  @ManyToOne(() => Intern, (intern) => intern.internCompanies)
+  @ManyToOne(() => Intern, (intern) => intern.internCompanies, {
+    cascade: ['remove', 'update'],
+  })
   public intern: Intern;
 }

@@ -13,7 +13,7 @@ export class CompanyNotFoundException extends NotFoundException {
 }
 
 export class InternNotFoundException extends NotFoundException {
-  constructor(internId: number) {
+  constructor(internId: number | string) {
     super(`Intern with the id: ${internId}, was not found`);
   }
 }

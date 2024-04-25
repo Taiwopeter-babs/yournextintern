@@ -5,7 +5,7 @@ import { CompanyModule } from './company/company.module';
 
 import configuration from './configuration/configuration';
 import { InternModule } from './intern/intern.module';
-import { InternCompany } from './lib/entities/internCompany.entity';
+import { InternCompany } from './interncompany/internCompany.entity';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 

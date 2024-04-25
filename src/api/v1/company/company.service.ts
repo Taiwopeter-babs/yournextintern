@@ -6,10 +6,10 @@ import CompanyDto from './dto/company.dto';
 import { IPagination } from '../lib/types';
 import getPaginationOffset from '../lib/pagination';
 import { CompanyNotFoundException } from '../exceptions/not-found.exception';
-import { ServerErrorException } from '../exceptions/server-error.exception';
 import { CompanyMapper } from './dto/mapper';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
 import { CompanyAlreadyExistsException } from '../exceptions/already-exists.exception';
+import { exceptionHandler } from '../exceptions/exceptionHandler';
 
 type PagedCompanyDto = {
   companies: CompanyDto[];
@@ -31,26 +31,25 @@ export class CompanyService {
   public async getAllCompanies(
     pageParams: IPagination,
   ): Promise<PagedCompanyDto> {
-    return await this.getPagedCompanies(pageParams);
+    return (await this.getPagedCompanies(pageParams)) as PagedCompanyDto;
   }
 
   public async getCompany(
     companyId: number,
     includeInterns: boolean,
   ): Promise<CompanyDto> {
-    try {
-      const company = await this.getCompanyEntity(companyId, includeInterns);
+    const company = (await this.getCompanyEntity(
+      companyId,
+      includeInterns,
+    )) as Company;
 
-      return CompanyMapper.toDto(company, includeInterns);
-    } catch (error) {
-      throw new ServerErrorException();
-    }
+    return CompanyMapper.toDto(company, includeInterns);
   }
 
   public async getCompanyByEmail(
     email: string,
     includeInterns: boolean,
-  ): Promise<CompanyDto> {
+  ): Promise<CompanyDto | void> {
     try {
       const company = await this.repo.findOneBy({ email: email });
       if (!company) {
@@ -59,7 +58,7 @@ export class CompanyService {
 
       return CompanyMapper.toDto(company, includeInterns);
     } catch (error) {
-      throw new ServerErrorException();
+      exceptionHandler(error);
     }
   }
 
@@ -72,7 +71,7 @@ export class CompanyService {
 
       return CompanyMapper.toDto(newCompany, false);
     } catch (error) {
-      throw new ServerErrorException();
+      exceptionHandler(error);
     }
   }
 
@@ -88,7 +87,7 @@ export class CompanyService {
 
       return true;
     } catch (error) {
-      throw new ServerErrorException();
+      exceptionHandler(error, companyId);
     }
   }
 
@@ -115,13 +114,13 @@ export class CompanyService {
 
       return;
     } catch (error) {
-      throw new ServerErrorException();
+      exceptionHandler(error, data.email);
     }
   }
 
   private async getPagedCompanies(
     pageParams: IPagination,
-  ): Promise<PagedCompanyDto> {
+  ): Promise<PagedCompanyDto | void> {
     try {
       const pageOffset = getPaginationOffset(pageParams);
 
@@ -150,14 +149,14 @@ export class CompanyService {
 
       return data;
     } catch (error) {
-      throw new ServerErrorException();
+      exceptionHandler(error);
     }
   }
 
   private async getCompanyEntity(
     companyId: number,
     includeInterns = false,
-  ): Promise<Company> {
+  ): Promise<Company | void> {
     try {
       const company = await this.repo.findOne({
         where: { id: companyId },
@@ -171,7 +170,7 @@ export class CompanyService {
 
       return company;
     } catch (error) {
-      throw new ServerErrorException();
+      exceptionHandler(error, companyId);
     }
   }
 }

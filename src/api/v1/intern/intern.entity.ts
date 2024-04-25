@@ -1,5 +1,5 @@
 import BaseEntity from '../lib/entities/baseEntity';
-import { InternCompany } from '../lib/entities/internCompany.entity';
+import { InternCompany } from '../interncompany/internCompany.entity';
 import { Entity, Column, OneToMany, BeforeInsert } from 'typeorm';
 
 export enum Gender {
