@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import Company from './company.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+
+import Company from './company.entity';
 import CompanyDto from './dto/company.dto';
+import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
+import DtoMapper from '../lib/mapper';
+
 import { IPagination } from '../lib/types';
 import getPaginationOffset from '../lib/pagination';
+
 import { CompanyNotFoundException } from '../exceptions/not-found.exception';
-import { CompanyMapper } from './dto/mapper';
-import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
 import { CompanyAlreadyExistsException } from '../exceptions/already-exists.exception';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
+
 import { AuthService } from '../auth/auth.service';
 import { InternCompanyService } from '../interncompany/interncompany.service';
 
@@ -44,7 +48,14 @@ export class CompanyService {
   ): Promise<CompanyDto> {
     const company = (await this.getCompanyEntity(companyId)) as Company;
 
-    return CompanyMapper.toDto(company, includeInterns);
+    if (includeInterns) {
+      const interns =
+        await this.relationService.getRelationsByCompany(companyId);
+
+      return DtoMapper.toCompanyDto(company, includeInterns, interns);
+    }
+
+    return DtoMapper.toCompanyDto(company, includeInterns);
   }
 
   public async getCompanyByEmail(
@@ -57,7 +68,7 @@ export class CompanyService {
         throw new CompanyNotFoundException(email);
       }
 
-      return CompanyMapper.toDto(company, includeInterns);
+      return DtoMapper.toCompanyDto(company, includeInterns);
     } catch (error) {
       exceptionHandler(error);
     }
@@ -75,7 +86,7 @@ export class CompanyService {
 
       const newCompany = await this.repo.save(company);
 
-      return CompanyMapper.toDto(newCompany, false);
+      return DtoMapper.toCompanyDto(newCompany, false);
     } catch (error) {
       console.error(error);
       exceptionHandler(error);
@@ -156,7 +167,7 @@ export class CompanyService {
       const totalPages = Math.ceil(itemsCount / pageParams.pageSize);
 
       const data: PagedCompanyDto = {
-        companies: companies.map((com) => CompanyMapper.toDto(com)),
+        companies: companies.map((com) => DtoMapper.toCompanyDto(com)),
         currentPage: pageParams.pageNumber,
         pageSize: pageParams.pageSize,
         totalPages: totalPages,
@@ -175,10 +186,8 @@ export class CompanyService {
     try {
       const company = await this.repo.findOne({
         where: { id: companyId },
-        relations: { internCompanies: false },
+        relations: { companyInterns: false },
       });
-
-      await this.relationService.getRelationsByCompany(companyId);
 
       if (!company) {
         throw new CompanyNotFoundException(companyId);

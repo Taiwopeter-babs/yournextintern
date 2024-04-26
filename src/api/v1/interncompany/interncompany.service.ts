@@ -4,6 +4,8 @@ import { InternCompany } from './internCompany.entity';
 import { Repository } from 'typeorm';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 import { RelationNotFoundException } from '../exceptions/not-found.exception';
+import CompanyDto from '../company/dto/company.dto';
+import InternDto from '../intern/dto/intern.dto';
 
 @Injectable()
 export class InternCompanyService {
@@ -12,8 +14,13 @@ export class InternCompanyService {
     private repo: Repository<InternCompany>,
   ) {}
 
-  public async saveRelation(companyId: number, internId: number) {
+  public async saveRelation(internId: number, companyId: number) {
     try {
+      // check for exsiting relation
+      const relationExists = await this.checkRelation(internId, companyId);
+
+      if (relationExists) return;
+
       const internCompanyObj: InternCompany = new InternCompany();
 
       internCompanyObj.companyId = companyId;
@@ -48,52 +55,64 @@ export class InternCompanyService {
   }
 
   public async getRelationsByCompany(companyId: number) {
-    const interns = await this.repo
-      .createQueryBuilder('internCompany')
-      .leftJoinAndSelect(
-        'interns',
-        'intern',
-        'intern.id = internCompany.internId',
-      )
-      .where('internCompany.companyId = :id', { id: companyId })
-      .getMany();
+    try {
+      const interns = await this.repo
+        .createQueryBuilder('intcom')
+        .leftJoinAndSelect('intcom.intern', 'intern')
+        .where('intcom.companyId = :id', { id: companyId })
+        .getMany();
 
-    const sql = this.repo
-      .createQueryBuilder('internCompany')
-      .leftJoinAndSelect(
-        'interns',
-        'intern',
-        'intern.id = internCompany.internId',
-      )
-      .where('internCompany.companyId = :id', { id: companyId })
-      .getQuery();
-    console.log(sql);
-    console.log(interns);
+      console.log(interns);
 
-    // return interns;
+      const companyInterns = interns.map((intcom) => {
+        const obj = intcom.intern as InternDto;
+        delete obj.password;
+        return obj;
+      });
+
+      return companyInterns;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   public async getRelationsByIntern(internId: number) {
-    const interns = await this.repo
-      .createQueryBuilder('internCompany')
-      .leftJoinAndSelect(
-        'companies',
-        'company',
-        'company.id = internCompany.companyId',
-      )
-      .where('internCompany.internId = :id', { id: internId })
-      .getMany();
+    try {
+      const companies = await this.repo
+        .createQueryBuilder('intcom')
+        .leftJoinAndSelect('intcom.company', 'company')
+        .where('intcom.internId = :id', { id: internId })
+        .getMany();
 
-    const sql = this.repo
-      .createQueryBuilder('internCompany')
-      .leftJoinAndSelect(
-        'companies',
-        'company',
-        'company.id = internCompany.companyId',
-      )
-      .where('internCompany.companyId = :id', { id: internId })
-      .getQuery();
-    console.log(sql);
-    console.log(interns);
+      console.log(companies);
+
+      const internCompanies = companies.map((intcom) => {
+        const obj = intcom.company as CompanyDto;
+        delete obj.password;
+        return obj;
+      });
+
+      return internCompanies;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  /** Check if the intern is linked to a company */
+  private async checkRelation(internId: number, companyId: number) {
+    try {
+      const relationObj = await this.repo.findOneBy({
+        companyId: companyId,
+        internId: internId,
+      });
+
+      console.log(relationObj);
+
+      if (relationObj) return true;
+
+      return false;
+    } catch (error) {
+      exceptionHandler(error);
+    }
   }
 }

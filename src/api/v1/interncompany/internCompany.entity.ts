@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('internsCompanies')
+@Entity('internscompanies')
 export class InternCompany {
   @PrimaryGeneratedColumn()
   public id: number;
@@ -22,7 +22,7 @@ export class InternCompany {
   @CreateDateColumn()
   public dateApplied: Date;
 
-  @ManyToOne(() => Company, (company) => company.internCompanies, {
+  @ManyToOne(() => Company, (company) => company.companyInterns, {
     cascade: ['remove', 'update'],
   })
   public company: Company;

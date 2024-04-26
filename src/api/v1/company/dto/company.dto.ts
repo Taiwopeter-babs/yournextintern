@@ -13,5 +13,5 @@ export default class CompanyDto extends BaseDto {
 
   public applicationOpen: boolean;
 
-  public interns?: Array<number>;
+  public companyInterns?: any[];
 }

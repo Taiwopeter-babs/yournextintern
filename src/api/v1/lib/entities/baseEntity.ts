@@ -4,7 +4,6 @@ import {
   CreateDateColumn,
   Column,
   Index,
-  BeforeInsert,
 } from 'typeorm';
 
 export default abstract class BaseEntity {
@@ -40,12 +39,4 @@ export default abstract class BaseEntity {
     nullable: true,
   })
   public profileImageUrl: string;
-
-  /**
-   * Before insert event listeners.
-   */
-  @BeforeInsert()
-  toLowerCase() {
-    this.email = this.email.toLowerCase();
-  }
 }

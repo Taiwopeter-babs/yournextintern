@@ -15,9 +15,10 @@ import { InternNotFoundException } from '../exceptions/not-found.exception';
 import getPaginationOffset from '../lib/pagination';
 import { IPagination } from '../lib/types';
 import Intern from './intern.entity';
-import { InternMapper } from './dto/mapper';
+import DtoMapper from '../lib/mapper';
 import InternDto from './dto/intern.dto';
 import { InternCompanyService } from '../interncompany/interncompany.service';
+import { CompanyService } from '../company/company.service';
 
 type PagedInternDto = {
   interns: InternDto[];
@@ -34,6 +35,7 @@ export class InternService {
   constructor(
     @InjectRepository(Intern)
     private repo: Repository<Intern>,
+    private companyService: CompanyService,
     private authService: AuthService,
     private relationService: InternCompanyService,
   ) {}
@@ -48,7 +50,18 @@ export class InternService {
   ): Promise<InternDto> {
     const intern = (await this.getInternEntity(internId)) as Intern;
 
-    return InternMapper.toDto(intern, includeCompanies);
+    if (includeCompanies) {
+      const companies =
+        await this.relationService.getRelationsByIntern(internId);
+
+      return DtoMapper.toInternDto(
+        intern,
+        includeCompanies,
+        companies,
+      ) as InternDto;
+    }
+
+    return DtoMapper.toInternDto(intern, includeCompanies) as InternDto;
   }
 
   public async getInternByEmail(
@@ -61,7 +74,7 @@ export class InternService {
         throw new InternNotFoundException(email);
       }
 
-      return InternMapper.toDto(intern, includeCompanies);
+      return DtoMapper.toInternDto(intern, includeCompanies) as InternDto;
     } catch (error) {
       exceptionHandler(error);
     }
@@ -79,7 +92,7 @@ export class InternService {
 
       const newIntern = await this.repo.save(intern);
 
-      return InternMapper.toDto(newIntern, false);
+      return DtoMapper.toInternDto(newIntern, false) as InternDto;
     } catch (error) {
       console.error(error);
       exceptionHandler(error);
@@ -111,6 +124,13 @@ export class InternService {
     } catch (error) {
       exceptionHandler(error);
     }
+  }
+
+  public async registerCompanyToIntern(internId: number, companyId: number) {
+    (await this.getInternEntity(internId)) as Intern;
+    await this.companyService.getCompany(companyId, false);
+
+    await this.relationService.saveRelation(internId, companyId);
   }
 
   /**
@@ -151,8 +171,12 @@ export class InternService {
 
       const totalPages = Math.ceil(itemsCount / pageParams.pageSize);
 
+      const internsData = interns.map((intern) =>
+        DtoMapper.toInternDto(intern),
+      ) as InternDto[];
+
       const data: PagedInternDto = {
-        interns: interns.map((intern) => InternMapper.toDto(intern)),
+        interns: internsData,
         currentPage: pageParams.pageNumber,
         pageSize: pageParams.pageSize,
         totalPages: totalPages,
@@ -173,8 +197,6 @@ export class InternService {
         where: { id: internId },
         relations: { internCompanies: false },
       });
-
-      await this.relationService.getRelationsByIntern(internId);
 
       if (!intern) {
         throw new InternNotFoundException(internId);

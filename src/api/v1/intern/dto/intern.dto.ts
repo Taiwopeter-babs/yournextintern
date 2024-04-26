@@ -17,5 +17,5 @@ export default class InternDto extends BaseDto {
 
   public numberOfApplications: number;
 
-  public companies?: Array<number>; // TODO: concrete type
+  public internCompanies?: any[];
 }

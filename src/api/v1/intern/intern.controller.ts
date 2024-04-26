@@ -65,4 +65,17 @@ export class InternController {
     await this._service.deleteIntern(id);
     return {};
   }
+
+  @Post(':id/companies/:companyId')
+  @HttpCode(200)
+  public async registerCompanyToIntern(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('companyId', ParseIntPipe) companyId: number,
+  ) {
+    await this._service.registerCompanyToIntern(id, companyId);
+    return {
+      statusCode: 200,
+      message: 'Company has been successfully registered to intern',
+    };
+  }
 }

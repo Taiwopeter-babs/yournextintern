@@ -1,6 +1,6 @@
 import BaseEntity from '../lib/entities/baseEntity';
 import { InternCompany } from '../interncompany/internCompany.entity';
-import { Entity, Column, OneToMany, Index, BeforeInsert } from 'typeorm';
+import { Entity, Column, OneToMany, Index } from 'typeorm';
 
 @Entity('companies')
 export default class Company extends BaseEntity {
@@ -52,15 +52,5 @@ export default class Company extends BaseEntity {
   public applicationOpen: boolean;
 
   @OneToMany(() => InternCompany, (internCompany) => internCompany.company)
-  public internCompanies: InternCompany[];
-
-  /**
-   * Before insert event listeners.
-   */
-  @BeforeInsert()
-  toLowerCase() {
-    this.name = this.name.toLowerCase();
-    this.address = this.address.toLowerCase();
-    this.address = this.address.toLowerCase();
-  }
+  public companyInterns: InternCompany[];
 }
