@@ -1,11 +1,7 @@
-import InternDto from '../../intern/dto/intern.dto';
+import BaseDto from '../../lib/entities/baseDto';
 
-export default class CompanyDto {
-  public id: number;
-
+export default class CompanyDto extends BaseDto {
   public name: string;
-
-  public email: string;
 
   public address: string;
 
@@ -13,15 +9,9 @@ export default class CompanyDto {
 
   public serviceType: string;
 
-  public availablePositions: number;
+  public numberPositions: number;
 
   public applicationOpen: boolean;
 
-  public createdAt: Date;
-
-  public updatedAt: Date;
-
-  public profileImageUrl?: string;
-
-  public interns?: InternDto[];
+  public interns?: Array<number>;
 }

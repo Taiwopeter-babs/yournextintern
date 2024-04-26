@@ -2,55 +2,52 @@ import { ServerErrorException } from './server-error.exception';
 import {
   CompanyNotFoundException,
   InternNotFoundException,
+  RelationNotFoundException,
 } from './not-found.exception';
 import {
   CompanyAlreadyExistsException,
   InternAlreadyExistsException,
 } from './already-exists.exception';
-
-type TError = string | number;
+// import { BadRequestException } from '@nestjs/common';
 
 /**
  * Every error is a class that is derived from HttpException
  * @param errorName The name of the exception
  * @param value The value to pass into the error constructor
  */
-export function exceptionHandler(error: Error, value: TError = '') {
+export function exceptionHandler(error: Error, value: any = '') {
   const exceptionsList = [
     'CompanyNotFoundException',
     'InternNotFoundException',
     'ServerErrorException',
     'InternAlreadyExistsException',
     'CompanyAlreadyExistsException',
+    'RelationNotFoundException',
   ];
 
   const { name, message } = error;
-
-  console.log(name, message, value);
 
   if (exceptionsList.indexOf(name) === -1) {
     throw new ServerErrorException(message);
   }
 
-  const exceptionMessage = `${message} ${value}`;
-
   switch (name) {
     case 'CompanyNotFoundException':
-      throw new CompanyNotFoundException(exceptionMessage);
+      throw new CompanyNotFoundException(value);
 
     case 'InternNotFoundException':
-      throw new InternNotFoundException(exceptionMessage);
+      throw new InternNotFoundException(value);
 
     case 'InternAlreadyExistsException':
-      throw new InternAlreadyExistsException(exceptionMessage);
+      throw new InternAlreadyExistsException(value);
 
     case 'CompanyAlreadyExistsException':
-      throw new CompanyAlreadyExistsException(exceptionMessage);
+      throw new CompanyAlreadyExistsException(value);
 
-    case 'ServerErrorException':
-      throw new ServerErrorException(exceptionMessage);
+    case 'RelationNotFoundException':
+      throw new RelationNotFoundException(value);
 
     default:
-      throw new ServerErrorException(exceptionMessage);
+      throw new ServerErrorException(message);
   }
 }

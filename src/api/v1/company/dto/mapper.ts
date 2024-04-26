@@ -10,17 +10,16 @@ export class CompanyMapper {
   public static toDto(entity: Company, includeInterns = false) {
     const dtoObj: CompanyDto = Object.assign({}, entity);
 
+    // const interns = [];
+
+    dtoObj.interns = entity.internCompanies?.map((en) => en.internId);
+
+    delete dtoObj.password;
+
     if (!includeInterns) {
       delete dtoObj.interns;
     }
     // transform interns
     return dtoObj;
   }
-
-  // public static toEntity<T>(dto: T): Company {
-  //   const dtoObj = Object.assign({}, dto);
-
-  //   // transform interns
-  //   return dtoObj as unknown as Company;
-  // }
 }

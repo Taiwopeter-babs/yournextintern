@@ -15,7 +15,6 @@ export default class Company extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 100,
-    unique: true,
     nullable: false,
   })
   public address: string;
@@ -23,7 +22,6 @@ export default class Company extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 100,
-    unique: true,
     nullable: true,
   })
   public website: string;
@@ -45,7 +43,7 @@ export default class Company extends BaseEntity {
     type: 'integer',
     default: 0,
   })
-  public availablePositions: number;
+  public numberPositions: number;
 
   @Column({
     type: 'boolean',

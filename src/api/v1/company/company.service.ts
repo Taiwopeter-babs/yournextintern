@@ -10,6 +10,8 @@ import { CompanyMapper } from './dto/mapper';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
 import { CompanyAlreadyExistsException } from '../exceptions/already-exists.exception';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
+import { AuthService } from '../auth/auth.service';
+import { InternCompanyService } from '../interncompany/interncompany.service';
 
 type PagedCompanyDto = {
   companies: CompanyDto[];
@@ -26,6 +28,8 @@ export class CompanyService {
   constructor(
     @InjectRepository(Company)
     private repo: Repository<Company>,
+    private authService: AuthService,
+    private relationService: InternCompanyService,
   ) {}
 
   public async getAllCompanies(
@@ -38,10 +42,7 @@ export class CompanyService {
     companyId: number,
     includeInterns: boolean,
   ): Promise<CompanyDto> {
-    const company = (await this.getCompanyEntity(
-      companyId,
-      includeInterns,
-    )) as Company;
+    const company = (await this.getCompanyEntity(companyId)) as Company;
 
     return CompanyMapper.toDto(company, includeInterns);
   }
@@ -64,30 +65,47 @@ export class CompanyService {
 
   public async createCompany(company: CreateCompanyDto) {
     try {
-      const data = { name: company.name, email: company.email };
-      await this.checkCompanyExists(data);
+      const { name, email, password } = company;
+
+      await this.checkCompanyExists({ name, email });
+
+      company.password = (await this.authService.hashPassword(
+        password,
+      )) as string;
 
       const newCompany = await this.repo.save(company);
 
       return CompanyMapper.toDto(newCompany, false);
     } catch (error) {
+      console.error(error);
       exceptionHandler(error);
     }
   }
 
-  public async updateCompany(
-    companyId: number,
-    data: UpdateCompanyDto,
-    includeInterns = false,
-  ) {
+  public async updateCompany(companyId: number, data: UpdateCompanyDto) {
     try {
-      await this.getCompanyEntity(companyId, includeInterns);
+      await this.getCompanyEntity(companyId);
 
       await this.repo.update(companyId, { ...data });
 
       return true;
     } catch (error) {
       exceptionHandler(error, companyId);
+    }
+  }
+
+  public async deleteCompany(companyId: number) {
+    (await this.getCompanyEntity(companyId)) as Company;
+
+    try {
+      await this.repo
+        .createQueryBuilder()
+        .delete()
+        .from(Company)
+        .where('id = :id', { id: companyId })
+        .execute();
+    } catch (error) {
+      exceptionHandler(error);
     }
   }
 
@@ -111,10 +129,10 @@ export class CompanyService {
       if (company) {
         throw new CompanyAlreadyExistsException(data.email);
       }
-
-      return;
     } catch (error) {
-      exceptionHandler(error, data.email);
+      // console.log(error);
+      throw error;
+      // exceptionHandler(error, data.email);
     }
   }
 
@@ -153,16 +171,14 @@ export class CompanyService {
     }
   }
 
-  private async getCompanyEntity(
-    companyId: number,
-    includeInterns = false,
-  ): Promise<Company | void> {
+  private async getCompanyEntity(companyId: number): Promise<Company | void> {
     try {
       const company = await this.repo.findOne({
         where: { id: companyId },
-        relationLoadStrategy: 'query', // use split queries
-        relations: { internCompanies: includeInterns },
+        relations: { internCompanies: false },
       });
+
+      await this.relationService.getRelationsByCompany(companyId);
 
       if (!company) {
         throw new CompanyNotFoundException(companyId);

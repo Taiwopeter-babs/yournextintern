@@ -23,7 +23,7 @@ class BaseCompanyDto {
 
   @IsOptional()
   @IsInt()
-  public availablePositions?: number;
+  public numberPositions?: number;
 
   @IsOptional()
   @IsBoolean()

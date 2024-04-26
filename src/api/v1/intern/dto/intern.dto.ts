@@ -1,13 +1,9 @@
-import CompanyDto from 'src/api/v1/company/dto/company.dto';
+import BaseDto from '../../lib/entities/baseDto';
 
-export default class InternDto {
-  public id: string;
-
+export default class InternDto extends BaseDto {
   public firstName: string;
 
   public lastName: string;
-
-  public email: string;
 
   public gender: string;
 
@@ -19,13 +15,7 @@ export default class InternDto {
 
   public course: string;
 
-  public numberOfApplications: string;
+  public numberOfApplications: number;
 
-  public createdAt: Date;
-
-  public updatedAt: Date;
-
-  public profileImageUrl?: string;
-
-  public companies?: CompanyDto[];
+  public companies?: Array<number>; // TODO: concrete type
 }

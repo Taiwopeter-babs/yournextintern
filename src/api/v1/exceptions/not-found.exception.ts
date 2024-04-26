@@ -17,3 +17,11 @@ export class InternNotFoundException extends NotFoundException {
     super(`Intern with the id: ${internId}, was not found`);
   }
 }
+
+export class RelationNotFoundException extends NotFoundException {
+  constructor(data: { internId: number | string; companyId: number | string }) {
+    super(
+      `Intern with the id: ${data.internId}, is not linked to Company with the id: ${data.companyId}`,
+    );
+  }
+}

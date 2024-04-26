@@ -1,10 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
-  // ParseIntPipe,
+  ParseIntPipe,
   Post,
   Put,
   // Query,
@@ -41,7 +42,7 @@ export class CompanyController {
   }
 
   @Get(':id')
-  public async getCompany(@Param('id') id: number) {
+  public async getCompany(@Param('id', ParseIntPipe) id: number) {
     const company = await this._service.getCompany(id, true);
 
     return { statusCode: 200, ...company };
@@ -50,11 +51,18 @@ export class CompanyController {
   @Put(':id')
   @HttpCode(204)
   public async updateCompany(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
-    await this._service.updateCompany(id, updateCompanyDto, false);
+    await this._service.updateCompany(id, updateCompanyDto);
 
+    return {};
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  public async deleteCompany(@Param('id', ParseIntPipe) id: number) {
+    await this._service.deleteCompany(id);
     return {};
   }
 }
