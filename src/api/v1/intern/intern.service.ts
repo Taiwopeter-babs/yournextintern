@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuthService } from '../auth/auth.service';
 
 import {
   CreateInternDto,
   UpdateInternDto,
 } from '../intern/dto/createIntern.dto';
 
-import { InternAlreadyExistsException } from '../exceptions/already-exists.exception';
+import { InternAlreadyExistsException } from '../exceptions/bad-request.exception';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 import { InternNotFoundException } from '../exceptions/not-found.exception';
 
@@ -36,7 +35,6 @@ export class InternService {
     @InjectRepository(Intern)
     private repo: Repository<Intern>,
     private companyService: CompanyService,
-    private authService: AuthService,
     private relationService: InternCompanyService,
   ) {}
 
@@ -67,14 +65,18 @@ export class InternService {
   public async getInternByEmail(
     email: string,
     includeCompanies: boolean,
-  ): Promise<InternDto | void> {
+  ): Promise<Intern | void> {
     try {
-      const intern = await this.repo.findOneBy({ email: email });
+      const intern = await this.repo.findOne({
+        where: { email: email },
+        relations: { internCompanies: includeCompanies },
+      });
+
       if (!intern) {
         throw new InternNotFoundException(email);
       }
 
-      return DtoMapper.toInternDto(intern, includeCompanies) as InternDto;
+      return intern;
     } catch (error) {
       exceptionHandler(error);
     }
@@ -82,13 +84,9 @@ export class InternService {
 
   public async createIntern(intern: CreateInternDto) {
     try {
-      const { email, password } = intern;
+      const { email } = intern;
 
       await this.checkInternExists(email);
-
-      intern.password = (await this.authService.hashPassword(
-        password,
-      )) as string;
 
       const newIntern = await this.repo.save(intern);
 

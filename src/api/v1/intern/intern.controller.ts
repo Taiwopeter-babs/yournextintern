@@ -9,12 +9,14 @@ import {
   Post,
   Put,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 
 import { IPagination } from '../lib/types';
 import { InternService } from './intern.service';
-import { CreateInternDto, UpdateInternDto } from './dto/createIntern.dto';
+import { UpdateInternDto } from './dto/createIntern.dto';
+import { InternJwtAuthGuard } from '../auth/auth.guards';
 
 @Controller('interns')
 export class InternController {
@@ -34,14 +36,8 @@ export class InternController {
     return { statusCode: 200, ...internsData };
   }
 
-  @Post()
-  public async createIntern(@Body() createInternDto: CreateInternDto) {
-    const intern = await this._service.createIntern(createInternDto);
-
-    return intern;
-  }
-
   @Get(':id')
+  @UseGuards(InternJwtAuthGuard)
   public async getCompany(@Param('id', ParseIntPipe) id: number) {
     const intern = await this._service.getIntern(id, true);
 

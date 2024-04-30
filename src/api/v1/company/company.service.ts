@@ -11,10 +11,9 @@ import { IPagination } from '../lib/types';
 import getPaginationOffset from '../lib/pagination';
 
 import { CompanyNotFoundException } from '../exceptions/not-found.exception';
-import { CompanyAlreadyExistsException } from '../exceptions/already-exists.exception';
+import { CompanyAlreadyExistsException } from '../exceptions/bad-request.exception';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 
-import { AuthService } from '../auth/auth.service';
 import { InternCompanyService } from '../interncompany/interncompany.service';
 
 type PagedCompanyDto = {
@@ -32,7 +31,6 @@ export class CompanyService {
   constructor(
     @InjectRepository(Company)
     private repo: Repository<Company>,
-    private authService: AuthService,
     private relationService: InternCompanyService,
   ) {}
 
@@ -61,14 +59,18 @@ export class CompanyService {
   public async getCompanyByEmail(
     email: string,
     includeInterns: boolean,
-  ): Promise<CompanyDto | void> {
+  ): Promise<Company | void> {
     try {
-      const company = await this.repo.findOneBy({ email: email });
+      const company = await this.repo.findOne({
+        where: { email: email },
+        relations: { companyInterns: includeInterns },
+      });
+
       if (!company) {
         throw new CompanyNotFoundException(email);
       }
 
-      return DtoMapper.toCompanyDto(company, includeInterns);
+      return company;
     } catch (error) {
       exceptionHandler(error);
     }
@@ -76,13 +78,9 @@ export class CompanyService {
 
   public async createCompany(company: CreateCompanyDto) {
     try {
-      const { name, email, password } = company;
+      const { name, email } = company;
 
       await this.checkCompanyExists({ name, email });
-
-      company.password = (await this.authService.hashPassword(
-        password,
-      )) as string;
 
       const newCompany = await this.repo.save(company);
 
@@ -141,9 +139,7 @@ export class CompanyService {
         throw new CompanyAlreadyExistsException(data.email);
       }
     } catch (error) {
-      // console.log(error);
-      throw error;
-      // exceptionHandler(error, data.email);
+      exceptionHandler(error, data.email);
     }
   }
 

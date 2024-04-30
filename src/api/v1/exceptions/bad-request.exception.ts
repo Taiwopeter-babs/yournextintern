@@ -17,3 +17,9 @@ export class InternAlreadyExistsException extends BadRequestException {
     super(`Intern with the id: ${internId}, already exists`);
   }
 }
+
+export class WrongCredentialsException extends BadRequestException {
+  constructor() {
+    super('Wrong credentials provided');
+  }
+}

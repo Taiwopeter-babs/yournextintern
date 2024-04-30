@@ -7,7 +7,7 @@ import {
 import {
   CompanyAlreadyExistsException,
   InternAlreadyExistsException,
-} from './already-exists.exception';
+} from './bad-request.exception';
 // import { BadRequestException } from '@nestjs/common';
 
 /**
