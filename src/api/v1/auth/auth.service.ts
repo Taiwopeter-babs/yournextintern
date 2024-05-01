@@ -5,12 +5,14 @@ import { CompanyService } from '../company/company.service';
 import Company from '../company/company.entity';
 import { WrongCredentialsException } from '../exceptions/bad-request.exception';
 
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import Intern from '../intern/intern.entity';
 import { ITokenPayload } from '../lib/types';
 import { CreateCompanyDto } from '../company/dto/createCompany.dto';
 import { CreateInternDto } from '../intern/dto/createIntern.dto';
 import { InternService } from '../intern/intern.service';
+import { ConfigService } from '@nestjs/config';
+import { CookieOptions } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -18,12 +20,13 @@ export class AuthService {
     private readonly companyService: CompanyService,
     private readonly internService: InternService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   /** salt rounds to hash password with */
   private saltRounds = 10;
 
-  public async validateCompany(email: string, hashedPassword: string) {
+  public async validateCompany(email: string, password: string) {
     try {
       const company = (await this.companyService.getCompanyByEmail(
         email,
@@ -31,8 +34,8 @@ export class AuthService {
       )) as Company;
 
       const isPasswordMatching = await this.verifyPassword(
+        password,
         company.password,
-        hashedPassword,
       );
 
       if (!isPasswordMatching) {
@@ -45,7 +48,7 @@ export class AuthService {
     }
   }
 
-  public async validateIntern(email: string, hashedPassword: string) {
+  public async validateIntern(email: string, password: string) {
     try {
       const intern = (await this.internService.getInternByEmail(
         email,
@@ -53,8 +56,8 @@ export class AuthService {
       )) as Intern;
 
       const isPasswordMatching = await this.verifyPassword(
+        password,
         intern.password,
-        hashedPassword,
       );
 
       if (!isPasswordMatching) {
@@ -68,14 +71,30 @@ export class AuthService {
   }
 
   /**
-   * Signs and returns an access token signed with the user's details - email and id
+   * Signs and returns an access token and cookie options for session
    */
   public async loginUser<T extends Company | Intern>(user: T) {
     const payload: ITokenPayload = { email: user.email, sub: user.id };
 
-    const accessToken = await this.jwtService.signAsync(payload);
+    const validTime = this.configService.get('JWT_VALID_TIME') as string;
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
 
-    return accessToken;
+    const jwtSignOptions: JwtSignOptions = {
+      expiresIn: parseInt(validTime, 10),
+      secret: jwtSecret,
+    };
+
+    const accessToken = await this.jwtService.signAsync(
+      payload,
+      jwtSignOptions,
+    );
+
+    const cookieOptions: CookieOptions = {
+      maxAge: parseInt(validTime, 10) * 1000,
+      httpOnly: true,
+    };
+
+    return [cookieOptions, accessToken];
   }
 
   /**

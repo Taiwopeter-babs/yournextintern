@@ -7,6 +7,7 @@ import {
 import {
   CompanyAlreadyExistsException,
   InternAlreadyExistsException,
+  WrongCredentialsException,
 } from './bad-request.exception';
 // import { BadRequestException } from '@nestjs/common';
 
@@ -23,6 +24,7 @@ export function exceptionHandler(error: Error, value: any = '') {
     'InternAlreadyExistsException',
     'CompanyAlreadyExistsException',
     'RelationNotFoundException',
+    'WrongCredentialsException',
   ];
 
   const { name, message } = error;
@@ -46,6 +48,9 @@ export function exceptionHandler(error: Error, value: any = '') {
 
     case 'RelationNotFoundException':
       throw new RelationNotFoundException(value);
+
+    case 'WrongCredentialsException':
+      throw new WrongCredentialsException();
 
     default:
       throw new ServerErrorException(message);

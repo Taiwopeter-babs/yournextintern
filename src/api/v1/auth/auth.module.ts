@@ -7,16 +7,17 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
 import { CompanyModule } from '../company/company.module';
+import { InternModule } from '../intern/intern.module';
+
 import {
   CompanyJwtStrategy,
-  CompanyLocalStrategy,
-} from './strategies/company.strategy';
-
-import { InternModule } from '../intern/intern.module';
-import {
   InternJwtStrategy,
+} from './strategies/jwt.strategy';
+
+import {
+  CompanyLocalStrategy,
   InternLocalStrategy,
-} from './strategies/intern.strategy';
+} from './strategies/local.strategy';
 
 @Module({
   imports: [
@@ -32,12 +33,14 @@ import {
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: `${configService.get<string>('JWT_VALID_TIME')}s`,
+          expiresIn: parseInt(
+            configService.get<string>('JWT_VALID_TIME') as string,
+            10,
+          ),
         },
       }),
     }),
   ],
-
   providers: [
     AuthService,
     CompanyLocalStrategy,

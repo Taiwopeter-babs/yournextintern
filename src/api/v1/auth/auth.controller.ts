@@ -15,14 +15,12 @@ import { CreateCompanyDto } from '../company/dto/createCompany.dto';
 
 import { AuthService } from './auth.service';
 import { LocalCompanyAuthGuard, LocalInternAuthGuard } from './auth.guards';
-import { CompanyService } from '../company/company.service';
 import Company from '../company/company.entity';
 import { strategyConstants } from './constants';
 
 import DtoMapper from '../lib/mapper';
 import CompanyDto from '../company/dto/company.dto';
 import { CreateInternDto } from '../intern/dto/createIntern.dto';
-import { InternService } from '../intern/intern.service';
 import InternDto from '../intern/dto/intern.dto';
 import Intern from '../intern/intern.entity';
 
@@ -30,14 +28,12 @@ import Intern from '../intern/intern.entity';
 export class AuthController {
   constructor(
     private readonly _service: AuthService,
-    private readonly companyService: CompanyService,
     private readonly configService: ConfigService,
-    private readonly internService: InternService,
   ) {}
 
   @Post('companies/register')
   public async registerCompany(@Body() createCompanyDto: CreateCompanyDto) {
-    const company = (await this.companyService.createCompany(
+    const company = (await this._service.registerCompany(
       createCompanyDto,
     )) as CompanyDto;
 
@@ -50,7 +46,7 @@ export class AuthController {
 
   @Post('interns/register')
   public async registerIntern(@Body() createInternDto: CreateInternDto) {
-    const intern = (await this.internService.createIntern(
+    const intern = (await this._service.registerIntern(
       createInternDto,
     )) as InternDto;
 
@@ -68,18 +64,15 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    // from auth validate strategy: CompanyLocalStrategy
+    // from authentication validate strategy: CompanyLocalStrategy
     const company = request.user as Company;
 
-    const cookie = await this._service.loginUser(company);
-
-    const cookieOptions: CookieOptions = {
-      maxAge: this.configService.get('JWT_VALID_TIME'),
-      httpOnly: true,
-    };
+    const [cookieOptions, accessToken] = (await this._service.loginUser(
+      company,
+    )) as [CookieOptions, string];
 
     // set payload for cookie
-    response.cookie(strategyConstants.cookieName, cookie, cookieOptions);
+    response.cookie(strategyConstants.cookieName, accessToken, cookieOptions);
 
     return {
       statusCode: HttpStatus.OK,
@@ -95,18 +88,15 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    // from auth validate strategy: CompanyLocalStrategy
+    // from authentication validate strategy: InternLocalStrategy
     const intern = request.user as Intern;
 
-    const cookie = await this._service.loginUser(intern);
-
-    const cookieOptions: CookieOptions = {
-      maxAge: this.configService.get('JWT_VALID_TIME'),
-      httpOnly: true,
-    };
+    const [cookieOptions, accessToken] = (await this._service.loginUser(
+      intern,
+    )) as [CookieOptions, string];
 
     // set payload for cookie
-    response.cookie(strategyConstants.cookieName, cookie, cookieOptions);
+    response.cookie(strategyConstants.cookieName, accessToken, cookieOptions);
 
     return {
       statusCode: HttpStatus.OK,

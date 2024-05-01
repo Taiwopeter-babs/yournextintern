@@ -23,6 +23,7 @@ export class InternController {
   constructor(private readonly _service: InternService) {}
 
   @Get()
+  @UseGuards(InternJwtAuthGuard)
   public async getAllInterns(@Req() request: Request) {
     const { pageNumber, pageSize } = request.query as Record<string, any>;
 
@@ -45,6 +46,7 @@ export class InternController {
   }
 
   @Put(':id')
+  @UseGuards(InternJwtAuthGuard)
   @HttpCode(204)
   public async updateIntern(
     @Param('id', ParseIntPipe) id: number,
@@ -56,6 +58,7 @@ export class InternController {
   }
 
   @Delete(':id')
+  @UseGuards(InternJwtAuthGuard)
   @HttpCode(204)
   public async deleteIntern(@Param('id', ParseIntPipe) id: number) {
     await this._service.deleteIntern(id);
@@ -63,6 +66,7 @@ export class InternController {
   }
 
   @Post(':id/companies/:companyId')
+  @UseGuards(InternJwtAuthGuard)
   @HttpCode(200)
   public async registerCompanyToIntern(
     @Param('id', ParseIntPipe) id: number,

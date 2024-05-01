@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import Company from './company.entity';
@@ -7,7 +7,7 @@ import CompanyDto from './dto/company.dto';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
 import DtoMapper from '../lib/mapper';
 
-import { IPagination } from '../lib/types';
+import { IPagination, PagedItemDto } from '../lib/types';
 import getPaginationOffset from '../lib/pagination';
 
 import { CompanyNotFoundException } from '../exceptions/not-found.exception';
@@ -15,16 +15,6 @@ import { CompanyAlreadyExistsException } from '../exceptions/bad-request.excepti
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 
 import { InternCompanyService } from '../interncompany/interncompany.service';
-
-type PagedCompanyDto = {
-  companies: CompanyDto[];
-  hasPrevious: boolean;
-  hasNext: boolean;
-  totalItems: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 @Injectable()
 export class CompanyService {
@@ -34,10 +24,8 @@ export class CompanyService {
     private relationService: InternCompanyService,
   ) {}
 
-  public async getAllCompanies(
-    pageParams: IPagination,
-  ): Promise<PagedCompanyDto> {
-    return (await this.getPagedCompanies(pageParams)) as PagedCompanyDto;
+  public async getAllCompanies(pageParams: IPagination): Promise<PagedItemDto> {
+    return (await this.getPagedCompanies(pageParams)) as PagedItemDto;
   }
 
   public async getCompany(
@@ -145,24 +133,26 @@ export class CompanyService {
 
   private async getPagedCompanies(
     pageParams: IPagination,
-  ): Promise<PagedCompanyDto | void> {
+  ): Promise<PagedItemDto | void> {
     try {
       const pageOffset = getPaginationOffset(pageParams);
+
+      const paginationOptions: FindManyOptions<Company> = {
+        skip: pageOffset,
+        take: pageParams.pageSize,
+        order: { name: 'ASC' },
+      };
 
       const [itemsCount, companies] = await Promise.all([
         // items count
         await this.repo.count(),
         // data
-        await this.repo.find({
-          skip: pageOffset,
-          take: pageParams.pageSize,
-          order: { name: 'ASC' },
-        }),
+        await this.repo.find({ ...paginationOptions }),
       ]);
 
       const totalPages = Math.ceil(itemsCount / pageParams.pageSize);
 
-      const data: PagedCompanyDto = {
+      const data: PagedItemDto = {
         companies: companies.map((com) => DtoMapper.toCompanyDto(com)),
         currentPage: pageParams.pageNumber,
         pageSize: pageParams.pageSize,

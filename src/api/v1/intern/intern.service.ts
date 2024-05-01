@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 
 import {
   CreateInternDto,
@@ -12,22 +12,12 @@ import { exceptionHandler } from '../exceptions/exceptionHandler';
 import { InternNotFoundException } from '../exceptions/not-found.exception';
 
 import getPaginationOffset from '../lib/pagination';
-import { IPagination } from '../lib/types';
+import { IPagination, PagedItemDto } from '../lib/types';
 import Intern from './intern.entity';
 import DtoMapper from '../lib/mapper';
 import InternDto from './dto/intern.dto';
 import { InternCompanyService } from '../interncompany/interncompany.service';
 import { CompanyService } from '../company/company.service';
-
-type PagedInternDto = {
-  interns: InternDto[];
-  hasPrevious: boolean;
-  hasNext: boolean;
-  totalItems: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 @Injectable()
 export class InternService {
@@ -38,8 +28,8 @@ export class InternService {
     private relationService: InternCompanyService,
   ) {}
 
-  public async getAllInterns(pageParams: IPagination): Promise<PagedInternDto> {
-    return (await this.getPagedInterns(pageParams)) as PagedInternDto;
+  public async getAllInterns(pageParams: IPagination): Promise<PagedItemDto> {
+    return (await this.getPagedInterns(pageParams)) as PagedItemDto;
   }
 
   public async getIntern(
@@ -152,29 +142,27 @@ export class InternService {
 
   private async getPagedInterns(
     pageParams: IPagination,
-  ): Promise<PagedInternDto | void> {
+  ): Promise<PagedItemDto | void> {
     try {
       const pageOffset = getPaginationOffset(pageParams);
+
+      const paginationOptions: FindManyOptions<Intern> = {
+        skip: pageOffset,
+        take: pageParams.pageSize,
+        order: { firstName: 'ASC' },
+      };
 
       const [itemsCount, interns] = await Promise.all([
         // items count
         await this.repo.count(),
         // data
-        await this.repo.find({
-          skip: pageOffset,
-          take: pageParams.pageSize,
-          order: { firstName: 'ASC' },
-        }),
+        await this.repo.find({ ...paginationOptions }),
       ]);
 
       const totalPages = Math.ceil(itemsCount / pageParams.pageSize);
 
-      const internsData = interns.map((intern) =>
-        DtoMapper.toInternDto(intern),
-      ) as InternDto[];
-
-      const data: PagedInternDto = {
-        interns: internsData,
+      const data: PagedItemDto = {
+        interns: interns.map((intern) => DtoMapper.toInternDto(intern)),
         currentPage: pageParams.pageNumber,
         pageSize: pageParams.pageSize,
         totalPages: totalPages,
