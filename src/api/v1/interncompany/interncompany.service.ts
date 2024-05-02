@@ -26,7 +26,7 @@ export class InternCompanyService {
    */
   public async createRelation(internId: number, idsOfCompanies: number[]) {
     try {
-      // console.log(idsOfCompanies);
+      // find already linked companies
       const linkedCompanies = await this.repo.find({
         where: {
           internId: internId,
@@ -34,18 +34,17 @@ export class InternCompanyService {
         },
       });
 
-      console.log(linkedCompanies);
-
+      // map linked companies ids to new array
       const linkedCompaniesIds = linkedCompanies.map(
         (entity) => entity.companyId,
       );
 
+      // filtered list of unlinked and possibly non-existent companies
       const companiesIdsNotLinked = idsOfCompanies.filter(
         (id) => linkedCompaniesIds.indexOf(id) === -1,
       );
 
-      console.log(companiesIdsNotLinked);
-
+      // list of companies not linked, but available for linking
       const availableCompanies = await this.companyRepo.find({
         where: {
           id: In([...companiesIdsNotLinked]),
