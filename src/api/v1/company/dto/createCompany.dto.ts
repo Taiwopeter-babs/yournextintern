@@ -39,5 +39,14 @@ export class CreateCompanyDto extends BaseCompanyDto {
   public password: string;
 }
 
+/** Dto for company login */
+export class LoginCompanyDto {
+  @IsEmail()
+  public email: string;
+
+  @IsNotEmpty()
+  public password: string;
+}
+
 /** Dto for company update. All properties are optional */
 export class UpdateCompanyDto extends PartialType(BaseCompanyDto) {}

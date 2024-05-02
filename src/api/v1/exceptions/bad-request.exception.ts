@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-class BadRequestException extends HttpException {
+export class BadRequestException extends HttpException {
   constructor(message: string) {
     super(message, HttpStatus.BAD_REQUEST);
   }
@@ -15,5 +15,11 @@ export class CompanyAlreadyExistsException extends BadRequestException {
 export class InternAlreadyExistsException extends BadRequestException {
   constructor(internId: number | string) {
     super(`Intern with the id: ${internId}, already exists`);
+  }
+}
+
+export class WrongCredentialsException extends BadRequestException {
+  constructor() {
+    super('Wrong credentials provided');
   }
 }

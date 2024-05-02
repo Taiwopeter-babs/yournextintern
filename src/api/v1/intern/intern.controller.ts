@@ -9,18 +9,21 @@ import {
   Post,
   Put,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 
 import { IPagination } from '../lib/types';
 import { InternService } from './intern.service';
-import { CreateInternDto, UpdateInternDto } from './dto/createIntern.dto';
+import { InternCompaniesDto, UpdateInternDto } from './dto/createIntern.dto';
+import { JwtAuthGuard } from '../auth/auth.guards';
 
 @Controller('interns')
 export class InternController {
   constructor(private readonly _service: InternService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   public async getAllInterns(@Req() request: Request) {
     const { pageNumber, pageSize } = request.query as Record<string, any>;
 
@@ -34,14 +37,8 @@ export class InternController {
     return { statusCode: 200, ...internsData };
   }
 
-  @Post()
-  public async createIntern(@Body() createInternDto: CreateInternDto) {
-    const intern = await this._service.createIntern(createInternDto);
-
-    return intern;
-  }
-
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   public async getCompany(@Param('id', ParseIntPipe) id: number) {
     const intern = await this._service.getIntern(id, true);
 
@@ -49,6 +46,7 @@ export class InternController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   public async updateIntern(
     @Param('id', ParseIntPipe) id: number,
@@ -60,19 +58,36 @@ export class InternController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   public async deleteIntern(@Param('id', ParseIntPipe) id: number) {
     await this._service.deleteIntern(id);
     return {};
   }
 
-  @Post(':id/companies/:companyId')
+  // @Post(':id/companies/:companyId')
+  // @UseGuards(JwtAuthGuard)
+  // @HttpCode(200)
+  // public async registerCompaniesToIntern(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   @Param('companyId', ParseIntPipe) companyId: number,
+  // ) {
+  //   await this._service.registerCompaniesToIntern(id, companyId);
+  //   return {
+  //     statusCode: 200,
+  //     message: 'Company has been successfully registered to intern',
+  //   };
+  // }
+
+  @Post(':id/companies')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  public async registerCompanyToIntern(
+  public async registerCompaniesTooIntern(
     @Param('id', ParseIntPipe) id: number,
-    @Param('companyId', ParseIntPipe) companyId: number,
+    @Body() companiesDto: InternCompaniesDto,
   ) {
-    await this._service.registerCompanyToIntern(id, companyId);
+    console.log(companiesDto);
+    await this._service.registerCompaniesToIntern(id, companiesDto.companies);
     return {
       statusCode: 200,
       message: 'Company has been successfully registered to intern',

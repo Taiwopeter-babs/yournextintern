@@ -1,32 +1,69 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InternCompany } from './internCompany.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 import { RelationNotFoundException } from '../exceptions/not-found.exception';
 import CompanyDto from '../company/dto/company.dto';
 import InternDto from '../intern/dto/intern.dto';
+import Company from '../company/company.entity';
 
 @Injectable()
 export class InternCompanyService {
   constructor(
     @InjectRepository(InternCompany)
     private repo: Repository<InternCompany>,
+    @InjectRepository(Company)
+    private companyRepo: Repository<Company>,
   ) {}
 
-  public async saveRelation(internId: number, companyId: number) {
+  /**
+   *
+   * @param internId id of intern
+   * @param idsOfCompanies ids of companies - companies previously registered to an intern
+   * and non-existing companies will be excluded from the creation process.
+   */
+  public async createRelation(internId: number, idsOfCompanies: number[]) {
     try {
-      // check for exsiting relation
-      const relationExists = await this.checkRelation(internId, companyId);
+      // find already linked companies
+      const linkedCompanies = await this.repo.find({
+        where: {
+          internId: internId,
+          companyId: In([...idsOfCompanies]),
+        },
+      });
 
-      if (relationExists) return;
+      // map linked companies ids to new array
+      const linkedCompaniesIds = linkedCompanies.map(
+        (entity) => entity.companyId,
+      );
 
-      const internCompanyObj: InternCompany = new InternCompany();
+      // filtered list of unlinked and possibly non-existent companies
+      const companiesIdsNotLinked = idsOfCompanies.filter(
+        (id) => linkedCompaniesIds.indexOf(id) === -1,
+      );
 
-      internCompanyObj.companyId = companyId;
-      internCompanyObj.internId = internId;
+      // list of companies not linked, but available for linking
+      const availableCompanies = await this.companyRepo.find({
+        where: {
+          id: In([...companiesIdsNotLinked]),
+        },
+      });
 
-      await this.repo.save(internCompanyObj);
+      // create an array of InternCompany entities
+      const arrayInternCompanies = availableCompanies.map((com) => {
+        const internCompanyObj = new InternCompany();
+
+        internCompanyObj.companyId = com.id;
+        internCompanyObj.internId = internId;
+
+        return internCompanyObj;
+      });
+
+      await this.repo.save(arrayInternCompanies);
+
+      console.log(availableCompanies);
     } catch (error) {
       exceptionHandler(error);
     }
@@ -54,6 +91,9 @@ export class InternCompanyService {
     }
   }
 
+  /**
+   * Get all interns linked to a company
+   */
   public async getRelationsByCompany(companyId: number) {
     try {
       const interns = await this.repo
@@ -61,8 +101,6 @@ export class InternCompanyService {
         .leftJoinAndSelect('intcom.intern', 'intern')
         .where('intcom.companyId = :id', { id: companyId })
         .getMany();
-
-      console.log(interns);
 
       const companyInterns = interns.map((intcom) => {
         const obj = intcom.intern as InternDto;
@@ -76,6 +114,9 @@ export class InternCompanyService {
     }
   }
 
+  /**
+   * Get all companies linked to an intern
+   */
   public async getRelationsByIntern(internId: number) {
     try {
       const companies = await this.repo
@@ -83,8 +124,6 @@ export class InternCompanyService {
         .leftJoinAndSelect('intcom.company', 'company')
         .where('intcom.internId = :id', { id: internId })
         .getMany();
-
-      console.log(companies);
 
       const internCompanies = companies.map((intcom) => {
         const obj = intcom.company as CompanyDto;
@@ -106,11 +145,7 @@ export class InternCompanyService {
         internId: internId,
       });
 
-      console.log(relationObj);
-
-      if (relationObj) return true;
-
-      return false;
+      return relationObj ? true : false;
     } catch (error) {
       exceptionHandler(error);
     }

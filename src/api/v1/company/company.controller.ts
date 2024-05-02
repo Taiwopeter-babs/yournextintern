@@ -6,21 +6,22 @@ import {
   HttpCode,
   Param,
   ParseIntPipe,
-  Post,
   Put,
-  // Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { IPagination } from '../lib/types';
-import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
+import { UpdateCompanyDto } from './dto/createCompany.dto';
 import { Request } from 'express';
+import { JwtAuthGuard } from '../auth/auth.guards';
 
 @Controller('companies')
 export class CompanyController {
   constructor(private readonly _service: CompanyService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   public async getAllCompanies(@Req() request: Request) {
     const { pageNumber, pageSize } = request.query as Record<string, any>;
 
@@ -34,14 +35,8 @@ export class CompanyController {
     return { statusCode: 200, ...companiesData };
   }
 
-  @Post()
-  public async createCompany(@Body() createCompanyDto: CreateCompanyDto) {
-    const company = await this._service.createCompany(createCompanyDto);
-
-    return company;
-  }
-
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   public async getCompany(@Param('id', ParseIntPipe) id: number) {
     const company = await this._service.getCompany(id, true);
 
@@ -49,6 +44,7 @@ export class CompanyController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   public async updateCompany(
     @Param('id', ParseIntPipe) id: number,
@@ -60,6 +56,7 @@ export class CompanyController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   public async deleteCompany(@Param('id', ParseIntPipe) id: number) {
     await this._service.deleteCompany(id);

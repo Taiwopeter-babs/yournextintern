@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import Company from './company.entity';
@@ -7,39 +7,25 @@ import CompanyDto from './dto/company.dto';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/createCompany.dto';
 import DtoMapper from '../lib/mapper';
 
-import { IPagination } from '../lib/types';
+import { IPagination, PagedItemDto } from '../lib/types';
 import getPaginationOffset from '../lib/pagination';
 
 import { CompanyNotFoundException } from '../exceptions/not-found.exception';
-import { CompanyAlreadyExistsException } from '../exceptions/already-exists.exception';
+import { CompanyAlreadyExistsException } from '../exceptions/bad-request.exception';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 
-import { AuthService } from '../auth/auth.service';
 import { InternCompanyService } from '../interncompany/interncompany.service';
-
-type PagedCompanyDto = {
-  companies: CompanyDto[];
-  hasPrevious: boolean;
-  hasNext: boolean;
-  totalItems: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 @Injectable()
 export class CompanyService {
   constructor(
     @InjectRepository(Company)
     private repo: Repository<Company>,
-    private authService: AuthService,
     private relationService: InternCompanyService,
   ) {}
 
-  public async getAllCompanies(
-    pageParams: IPagination,
-  ): Promise<PagedCompanyDto> {
-    return (await this.getPagedCompanies(pageParams)) as PagedCompanyDto;
+  public async getAllCompanies(pageParams: IPagination): Promise<PagedItemDto> {
+    return (await this.getPagedCompanies(pageParams)) as PagedItemDto;
   }
 
   public async getCompany(
@@ -61,14 +47,18 @@ export class CompanyService {
   public async getCompanyByEmail(
     email: string,
     includeInterns: boolean,
-  ): Promise<CompanyDto | void> {
+  ): Promise<Company | void> {
     try {
-      const company = await this.repo.findOneBy({ email: email });
+      const company = await this.repo.findOne({
+        where: { email: email },
+        relations: { companyInterns: includeInterns },
+      });
+
       if (!company) {
         throw new CompanyNotFoundException(email);
       }
 
-      return DtoMapper.toCompanyDto(company, includeInterns);
+      return company;
     } catch (error) {
       exceptionHandler(error);
     }
@@ -76,13 +66,9 @@ export class CompanyService {
 
   public async createCompany(company: CreateCompanyDto) {
     try {
-      const { name, email, password } = company;
+      const { name, email } = company;
 
       await this.checkCompanyExists({ name, email });
-
-      company.password = (await this.authService.hashPassword(
-        password,
-      )) as string;
 
       const newCompany = await this.repo.save(company);
 
@@ -101,7 +87,7 @@ export class CompanyService {
 
       return true;
     } catch (error) {
-      exceptionHandler(error, companyId);
+      exceptionHandler(error);
     }
   }
 
@@ -141,32 +127,33 @@ export class CompanyService {
         throw new CompanyAlreadyExistsException(data.email);
       }
     } catch (error) {
-      // console.log(error);
-      throw error;
-      // exceptionHandler(error, data.email);
+      console.log(data);
+      exceptionHandler(error);
     }
   }
 
   private async getPagedCompanies(
     pageParams: IPagination,
-  ): Promise<PagedCompanyDto | void> {
+  ): Promise<PagedItemDto | void> {
     try {
       const pageOffset = getPaginationOffset(pageParams);
+
+      const paginationOptions: FindManyOptions<Company> = {
+        skip: pageOffset,
+        take: pageParams.pageSize,
+        order: { name: 'ASC' },
+      };
 
       const [itemsCount, companies] = await Promise.all([
         // items count
         await this.repo.count(),
         // data
-        await this.repo.find({
-          skip: pageOffset,
-          take: pageParams.pageSize,
-          order: { name: 'ASC' },
-        }),
+        await this.repo.find({ ...paginationOptions }),
       ]);
 
       const totalPages = Math.ceil(itemsCount / pageParams.pageSize);
 
-      const data: PagedCompanyDto = {
+      const data: PagedItemDto = {
         companies: companies.map((com) => DtoMapper.toCompanyDto(com)),
         currentPage: pageParams.pageNumber,
         pageSize: pageParams.pageSize,
@@ -195,7 +182,7 @@ export class CompanyService {
 
       return company;
     } catch (error) {
-      exceptionHandler(error, companyId);
+      exceptionHandler(error);
     }
   }
 }

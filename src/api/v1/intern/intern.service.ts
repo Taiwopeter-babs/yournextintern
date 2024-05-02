@@ -1,34 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { AuthService } from '../auth/auth.service';
+import { FindManyOptions, Repository } from 'typeorm';
 
 import {
   CreateInternDto,
   UpdateInternDto,
 } from '../intern/dto/createIntern.dto';
 
-import { InternAlreadyExistsException } from '../exceptions/already-exists.exception';
+import { InternAlreadyExistsException } from '../exceptions/bad-request.exception';
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 import { InternNotFoundException } from '../exceptions/not-found.exception';
 
 import getPaginationOffset from '../lib/pagination';
-import { IPagination } from '../lib/types';
+import { IPagination, PagedItemDto } from '../lib/types';
 import Intern from './intern.entity';
 import DtoMapper from '../lib/mapper';
 import InternDto from './dto/intern.dto';
 import { InternCompanyService } from '../interncompany/interncompany.service';
 import { CompanyService } from '../company/company.service';
-
-type PagedInternDto = {
-  interns: InternDto[];
-  hasPrevious: boolean;
-  hasNext: boolean;
-  totalItems: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 @Injectable()
 export class InternService {
@@ -36,12 +25,11 @@ export class InternService {
     @InjectRepository(Intern)
     private repo: Repository<Intern>,
     private companyService: CompanyService,
-    private authService: AuthService,
     private relationService: InternCompanyService,
   ) {}
 
-  public async getAllInterns(pageParams: IPagination): Promise<PagedInternDto> {
-    return (await this.getPagedInterns(pageParams)) as PagedInternDto;
+  public async getAllInterns(pageParams: IPagination): Promise<PagedItemDto> {
+    return (await this.getPagedInterns(pageParams)) as PagedItemDto;
   }
 
   public async getIntern(
@@ -67,14 +55,18 @@ export class InternService {
   public async getInternByEmail(
     email: string,
     includeCompanies: boolean,
-  ): Promise<InternDto | void> {
+  ): Promise<Intern | void> {
     try {
-      const intern = await this.repo.findOneBy({ email: email });
+      const intern = await this.repo.findOne({
+        where: { email: email },
+        relations: { internCompanies: includeCompanies },
+      });
+
       if (!intern) {
         throw new InternNotFoundException(email);
       }
 
-      return DtoMapper.toInternDto(intern, includeCompanies) as InternDto;
+      return intern;
     } catch (error) {
       exceptionHandler(error);
     }
@@ -82,13 +74,9 @@ export class InternService {
 
   public async createIntern(intern: CreateInternDto) {
     try {
-      const { email, password } = intern;
+      const { email } = intern;
 
       await this.checkInternExists(email);
-
-      intern.password = (await this.authService.hashPassword(
-        password,
-      )) as string;
 
       const newIntern = await this.repo.save(intern);
 
@@ -107,7 +95,7 @@ export class InternService {
 
       return true;
     } catch (error) {
-      exceptionHandler(error, internId);
+      exceptionHandler(error);
     }
   }
 
@@ -126,11 +114,26 @@ export class InternService {
     }
   }
 
-  public async registerCompanyToIntern(internId: number, companyId: number) {
-    (await this.getInternEntity(internId)) as Intern;
-    await this.companyService.getCompany(companyId, false);
+  // public async registerCompaniesToIntern(internId: number, companyId: number) {
+  //   (await this.getInternEntity(internId)) as Intern;
+  //   await this.companyService.getCompany(companyId, false);
 
-    await this.relationService.saveRelation(internId, companyId);
+  //   await this.relationService.createRelation(internId, companyId);
+  // }
+
+  /**
+   *
+   * @param internId The id of the intern whose registered companies we want to add
+   * @param companies An array of ids (integers) of companies to register to an intern
+   */
+  public async registerCompaniesToIntern(
+    internId: number,
+    idsOfCompanies: number[],
+  ) {
+    // (await this.getInternEntity(internId)) as Intern;
+    // await this.companyService.getCompany(companyId, false);
+
+    await this.relationService.createRelation(internId, idsOfCompanies);
   }
 
   /**
@@ -148,35 +151,33 @@ export class InternService {
         throw new InternAlreadyExistsException(email);
       }
     } catch (error) {
-      exceptionHandler(error, email);
+      exceptionHandler(error);
     }
   }
 
   private async getPagedInterns(
     pageParams: IPagination,
-  ): Promise<PagedInternDto | void> {
+  ): Promise<PagedItemDto | void> {
     try {
       const pageOffset = getPaginationOffset(pageParams);
+
+      const paginationOptions: FindManyOptions<Intern> = {
+        skip: pageOffset,
+        take: pageParams.pageSize,
+        order: { firstName: 'ASC' },
+      };
 
       const [itemsCount, interns] = await Promise.all([
         // items count
         await this.repo.count(),
         // data
-        await this.repo.find({
-          skip: pageOffset,
-          take: pageParams.pageSize,
-          order: { firstName: 'ASC' },
-        }),
+        await this.repo.find({ ...paginationOptions }),
       ]);
 
       const totalPages = Math.ceil(itemsCount / pageParams.pageSize);
 
-      const internsData = interns.map((intern) =>
-        DtoMapper.toInternDto(intern),
-      ) as InternDto[];
-
-      const data: PagedInternDto = {
-        interns: internsData,
+      const data: PagedItemDto = {
+        interns: interns.map((intern) => DtoMapper.toInternDto(intern)),
         currentPage: pageParams.pageNumber,
         pageSize: pageParams.pageSize,
         totalPages: totalPages,
@@ -204,7 +205,7 @@ export class InternService {
 
       return intern;
     } catch (error) {
-      exceptionHandler(error, internId);
+      exceptionHandler(error);
     }
   }
 }
