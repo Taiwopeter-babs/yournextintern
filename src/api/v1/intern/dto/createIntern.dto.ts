@@ -1,8 +1,12 @@
 import {
+  ArrayMinSize,
+  ArrayNotEmpty,
+  IsArray,
   IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsString,
   Length,
 } from 'class-validator';
@@ -50,3 +54,11 @@ export class CreateInternDto extends BaseInternDto {
 
 /** Dto for intern update. All properties are optional */
 export class UpdateInternDto extends PartialType(BaseInternDto) {}
+
+export class InternCompaniesDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMinSize(1)
+  @IsNumber({ allowNaN: false }, { each: true })
+  companies: number[];
+}

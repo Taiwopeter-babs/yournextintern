@@ -114,11 +114,26 @@ export class InternService {
     }
   }
 
-  public async registerCompanyToIntern(internId: number, companyId: number) {
-    (await this.getInternEntity(internId)) as Intern;
-    await this.companyService.getCompany(companyId, false);
+  // public async registerCompaniesToIntern(internId: number, companyId: number) {
+  //   (await this.getInternEntity(internId)) as Intern;
+  //   await this.companyService.getCompany(companyId, false);
 
-    await this.relationService.saveRelation(internId, companyId);
+  //   await this.relationService.createRelation(internId, companyId);
+  // }
+
+  /**
+   *
+   * @param internId The id of the intern whose registered companies we want to add
+   * @param companies An array of ids (integers) of companies to register to an intern
+   */
+  public async registerCompaniesToIntern(
+    internId: number,
+    idsOfCompanies: number[],
+  ) {
+    // (await this.getInternEntity(internId)) as Intern;
+    // await this.companyService.getCompany(companyId, false);
+
+    await this.relationService.createRelation(internId, idsOfCompanies);
   }
 
   /**

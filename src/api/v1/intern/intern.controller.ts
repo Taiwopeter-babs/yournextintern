@@ -15,7 +15,7 @@ import { Request } from 'express';
 
 import { IPagination } from '../lib/types';
 import { InternService } from './intern.service';
-import { UpdateInternDto } from './dto/createIntern.dto';
+import { InternCompaniesDto, UpdateInternDto } from './dto/createIntern.dto';
 import { JwtAuthGuard } from '../auth/auth.guards';
 
 @Controller('interns')
@@ -65,14 +65,29 @@ export class InternController {
     return {};
   }
 
-  @Post(':id/companies/:companyId')
+  // @Post(':id/companies/:companyId')
+  // @UseGuards(JwtAuthGuard)
+  // @HttpCode(200)
+  // public async registerCompaniesToIntern(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   @Param('companyId', ParseIntPipe) companyId: number,
+  // ) {
+  //   await this._service.registerCompaniesToIntern(id, companyId);
+  //   return {
+  //     statusCode: 200,
+  //     message: 'Company has been successfully registered to intern',
+  //   };
+  // }
+
+  @Post(':id/companies')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  public async registerCompanyToIntern(
+  public async registerCompaniesTooIntern(
     @Param('id', ParseIntPipe) id: number,
-    @Param('companyId', ParseIntPipe) companyId: number,
+    @Body() companiesDto: InternCompaniesDto,
   ) {
-    await this._service.registerCompanyToIntern(id, companyId);
+    console.log(companiesDto);
+    await this._service.registerCompaniesToIntern(id, companiesDto.companies);
     return {
       statusCode: 200,
       message: 'Company has been successfully registered to intern',
