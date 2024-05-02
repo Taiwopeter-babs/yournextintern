@@ -87,7 +87,7 @@ export class CompanyService {
 
       return true;
     } catch (error) {
-      exceptionHandler(error, companyId);
+      exceptionHandler(error);
     }
   }
 
@@ -127,7 +127,8 @@ export class CompanyService {
         throw new CompanyAlreadyExistsException(data.email);
       }
     } catch (error) {
-      exceptionHandler(error, data.email);
+      console.log(data);
+      exceptionHandler(error);
     }
   }
 
@@ -181,7 +182,7 @@ export class CompanyService {
 
       return company;
     } catch (error) {
-      exceptionHandler(error, companyId);
+      exceptionHandler(error);
     }
   }
 }

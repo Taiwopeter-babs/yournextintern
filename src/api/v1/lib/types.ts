@@ -11,8 +11,10 @@ export interface IPagination {
   pageSize: number;
 }
 
+export type TEntity = 'Company' | 'Intern';
 export interface ITokenPayload {
   email: string;
+  entityType: TEntity;
   sub: number;
 }
 

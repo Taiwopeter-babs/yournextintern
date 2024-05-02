@@ -1,14 +1,5 @@
 import { ServerErrorException } from './server-error.exception';
-import {
-  CompanyNotFoundException,
-  InternNotFoundException,
-  RelationNotFoundException,
-} from './not-found.exception';
-import {
-  CompanyAlreadyExistsException,
-  InternAlreadyExistsException,
-  WrongCredentialsException,
-} from './bad-request.exception';
+
 // import { BadRequestException } from '@nestjs/common';
 
 /**
@@ -16,7 +7,7 @@ import {
  * @param errorName The name of the exception
  * @param value The value to pass into the error constructor
  */
-export function exceptionHandler(error: Error, value: any = '') {
+export function exceptionHandler(error: Error) {
   const exceptionsList = [
     'CompanyNotFoundException',
     'InternNotFoundException',
@@ -33,26 +24,5 @@ export function exceptionHandler(error: Error, value: any = '') {
     throw new ServerErrorException(message);
   }
 
-  switch (name) {
-    case 'CompanyNotFoundException':
-      throw new CompanyNotFoundException(value);
-
-    case 'InternNotFoundException':
-      throw new InternNotFoundException(value);
-
-    case 'InternAlreadyExistsException':
-      throw new InternAlreadyExistsException(value);
-
-    case 'CompanyAlreadyExistsException':
-      throw new CompanyAlreadyExistsException(value);
-
-    case 'RelationNotFoundException':
-      throw new RelationNotFoundException(value);
-
-    case 'WrongCredentialsException':
-      throw new WrongCredentialsException();
-
-    default:
-      throw new ServerErrorException(message);
-  }
+  throw error;
 }

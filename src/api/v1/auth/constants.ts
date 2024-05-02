@@ -3,5 +3,6 @@ export const strategyConstants = {
   internAuth: 'intern-auth-strategy',
   companyJwt: 'company-jwt',
   internJwt: 'intern-jwt',
+  jwt: 'jwt',
   cookieName: 'authentication',
 };

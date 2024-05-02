@@ -4,20 +4,16 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 
 import { ITokenPayload } from '../../lib/types';
-import { CompanyService } from '../../company/company.service';
 
 import { strategyConstants } from '../constants';
 import { Request } from 'express';
-import { InternService } from '../../intern/intern.service';
+import { AuthService } from '../auth.service';
 
 /**
  * Extracts the cookie value from the request object
  */
 export const cookieExtractor = (request: Request): string => {
   let accessToken = null;
-
-  console.log(`${request.cookies[strategyConstants.cookieName]} hello meee`);
-  console.log(request.cookies);
 
   if (request.cookies)
     accessToken = request.cookies[strategyConstants.cookieName];
@@ -26,13 +22,13 @@ export const cookieExtractor = (request: Request): string => {
 };
 
 @Injectable()
-export class CompanyJwtStrategy extends PassportStrategy(
+export class JwtStrategy extends PassportStrategy(
   Strategy,
-  strategyConstants.companyJwt,
+  strategyConstants.jwt,
 ) {
   constructor(
     configService: ConfigService,
-    private readonly companyService: CompanyService,
+    private readonly authService: AuthService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
@@ -42,30 +38,9 @@ export class CompanyJwtStrategy extends PassportStrategy(
   }
 
   async validate(payload: ITokenPayload) {
-    // payload.sub references the id of the company
-    // console.log()
-    return await this.companyService.getCompany(payload.sub, true);
-  }
-}
+    // entityType determines where data is pulled from
+    const { entityType, email } = payload;
 
-@Injectable()
-export class InternJwtStrategy extends PassportStrategy(
-  Strategy,
-  strategyConstants.internJwt,
-) {
-  constructor(
-    configService: ConfigService,
-    private readonly internService: InternService,
-  ) {
-    super({
-      jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
-      ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
-    });
-  }
-
-  async validate(payload: ITokenPayload) {
-    // payload.sub references the id of the entity
-    return this.internService.getIntern(payload.sub, true);
+    return await this.authService.getJwtData(entityType, email);
   }
 }

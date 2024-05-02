@@ -16,14 +16,14 @@ import { Request } from 'express';
 import { IPagination } from '../lib/types';
 import { InternService } from './intern.service';
 import { UpdateInternDto } from './dto/createIntern.dto';
-import { InternJwtAuthGuard } from '../auth/auth.guards';
+import { JwtAuthGuard } from '../auth/auth.guards';
 
 @Controller('interns')
 export class InternController {
   constructor(private readonly _service: InternService) {}
 
   @Get()
-  @UseGuards(InternJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   public async getAllInterns(@Req() request: Request) {
     const { pageNumber, pageSize } = request.query as Record<string, any>;
 
@@ -38,7 +38,7 @@ export class InternController {
   }
 
   @Get(':id')
-  @UseGuards(InternJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   public async getCompany(@Param('id', ParseIntPipe) id: number) {
     const intern = await this._service.getIntern(id, true);
 
@@ -46,7 +46,7 @@ export class InternController {
   }
 
   @Put(':id')
-  @UseGuards(InternJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   public async updateIntern(
     @Param('id', ParseIntPipe) id: number,
@@ -58,7 +58,7 @@ export class InternController {
   }
 
   @Delete(':id')
-  @UseGuards(InternJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   public async deleteIntern(@Param('id', ParseIntPipe) id: number) {
     await this._service.deleteIntern(id);
@@ -66,7 +66,7 @@ export class InternController {
   }
 
   @Post(':id/companies/:companyId')
-  @UseGuards(InternJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   public async registerCompanyToIntern(
     @Param('id', ParseIntPipe) id: number,

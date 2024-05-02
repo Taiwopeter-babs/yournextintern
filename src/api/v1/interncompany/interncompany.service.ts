@@ -62,7 +62,7 @@ export class InternCompanyService {
         .where('intcom.companyId = :id', { id: companyId })
         .getMany();
 
-      console.log(interns);
+      // console.log(interns);
 
       const companyInterns = interns.map((intcom) => {
         const obj = intcom.intern as InternDto;

@@ -95,7 +95,7 @@ export class InternService {
 
       return true;
     } catch (error) {
-      exceptionHandler(error, internId);
+      exceptionHandler(error);
     }
   }
 
@@ -136,7 +136,7 @@ export class InternService {
         throw new InternAlreadyExistsException(email);
       }
     } catch (error) {
-      exceptionHandler(error, email);
+      exceptionHandler(error);
     }
   }
 
@@ -190,7 +190,7 @@ export class InternService {
 
       return intern;
     } catch (error) {
-      exceptionHandler(error, internId);
+      exceptionHandler(error);
     }
   }
 }

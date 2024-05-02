@@ -9,10 +9,7 @@ import { AuthController } from './auth.controller';
 import { CompanyModule } from '../company/company.module';
 import { InternModule } from '../intern/intern.module';
 
-import {
-  CompanyJwtStrategy,
-  InternJwtStrategy,
-} from './strategies/jwt.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 import {
   CompanyLocalStrategy,
@@ -44,8 +41,7 @@ import {
   providers: [
     AuthService,
     CompanyLocalStrategy,
-    CompanyJwtStrategy,
-    InternJwtStrategy,
+    JwtStrategy,
     InternLocalStrategy,
   ],
   controllers: [AuthController],

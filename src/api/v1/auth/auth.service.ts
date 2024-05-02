@@ -1,5 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { CookieOptions } from 'express';
+import { ConfigService } from '@nestjs/config';
+
 import { exceptionHandler } from '../exceptions/exceptionHandler';
 import { CompanyService } from '../company/company.service';
 import Company from '../company/company.entity';
@@ -7,15 +10,15 @@ import { WrongCredentialsException } from '../exceptions/bad-request.exception';
 
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import Intern from '../intern/intern.entity';
-import { ITokenPayload } from '../lib/types';
+import { ITokenPayload, TEntity } from '../lib/types';
 import { CreateCompanyDto } from '../company/dto/createCompany.dto';
 import { CreateInternDto } from '../intern/dto/createIntern.dto';
 import { InternService } from '../intern/intern.service';
-import { ConfigService } from '@nestjs/config';
-import { CookieOptions } from 'express';
 
 @Injectable()
 export class AuthService {
+  private entityTypes: string[] = ['Company', 'Intern'];
+
   constructor(
     private readonly companyService: CompanyService,
     private readonly internService: InternService,
@@ -70,11 +73,49 @@ export class AuthService {
     }
   }
 
+  public async getJwtData(
+    entityType: TEntity,
+    email: string,
+  ): Promise<Company | Intern | undefined> {
+    let entity: Company | Intern;
+
+    try {
+      if (this.entityTypes.indexOf(entityType) === -1) {
+        throw new UnauthorizedException(
+          `Entity with the email: ${email}, is invalid`,
+        );
+      }
+
+      if (entityType === 'Company') {
+        entity = (await this.companyService.getCompanyByEmail(
+          email,
+          false,
+        )) as Company;
+      } else {
+        entity = (await this.internService.getInternByEmail(
+          email,
+          false,
+        )) as Intern;
+      }
+
+      return entity;
+    } catch (error) {
+      exceptionHandler(error);
+    }
+  }
+
   /**
    * Signs and returns an access token and cookie options for session
    */
-  public async loginUser<T extends Company | Intern>(user: T) {
-    const payload: ITokenPayload = { email: user.email, sub: user.id };
+  public async loginUser<T extends Company | Intern>(
+    user: T,
+    entityType: TEntity,
+  ) {
+    const payload: ITokenPayload = {
+      email: user.email,
+      entityType: entityType,
+      sub: user.id,
+    };
 
     const validTime = this.configService.get('JWT_VALID_TIME') as string;
     const jwtSecret = this.configService.get<string>('JWT_SECRET');

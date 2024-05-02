@@ -9,7 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CookieOptions, Request, Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 
 import { CreateCompanyDto } from '../company/dto/createCompany.dto';
 
@@ -26,10 +25,7 @@ import Intern from '../intern/intern.entity';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly _service: AuthService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly _service: AuthService) {}
 
   @Post('companies/register')
   public async registerCompany(@Body() createCompanyDto: CreateCompanyDto) {
@@ -69,6 +65,7 @@ export class AuthController {
 
     const [cookieOptions, accessToken] = (await this._service.loginUser(
       company,
+      'Company',
     )) as [CookieOptions, string];
 
     // set payload for cookie
@@ -93,6 +90,7 @@ export class AuthController {
 
     const [cookieOptions, accessToken] = (await this._service.loginUser(
       intern,
+      'Intern',
     )) as [CookieOptions, string];
 
     // set payload for cookie

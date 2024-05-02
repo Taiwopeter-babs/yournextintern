@@ -19,11 +19,4 @@ export class LocalInternAuthGuard extends AuthGuard(
  * logical differences in the passport validate method
  */
 @Injectable()
-export class CompanyJwtAuthGuard extends AuthGuard(
-  strategyConstants.companyJwt,
-) {}
-
-@Injectable()
-export class InternJwtAuthGuard extends AuthGuard(
-  strategyConstants.internJwt,
-) {}
+export class JwtAuthGuard extends AuthGuard(strategyConstants.jwt) {}
