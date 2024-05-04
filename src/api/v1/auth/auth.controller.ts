@@ -27,7 +27,7 @@ import Intern from '../intern/intern.entity';
 export class AuthController {
   constructor(private readonly _service: AuthService) {}
 
-  @Post('companies/register')
+  @Post('companies/')
   public async registerCompany(@Body() createCompanyDto: CreateCompanyDto) {
     const company = (await this._service.registerCompany(
       createCompanyDto,
@@ -40,7 +40,7 @@ export class AuthController {
     };
   }
 
-  @Post('interns/register')
+  @Post('interns')
   public async registerIntern(@Body() createInternDto: CreateInternDto) {
     const intern = (await this._service.registerIntern(
       createInternDto,
